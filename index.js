@@ -4,7 +4,7 @@ import { Low, JSONFile } from "lowdb";
 import { Client, GatewayIntentBits, REST, Routes, Events, EmbedBuilder, SlashCommandBuilder, ActivityType } from "discord.js";
 import snowflakeid from "flakeid"; // used for generating warnids
 
-const token = process.env.TOKEN;
+const token = "";
 const loggingChannel = "929727980694044742";
 const prefix = ".";
 const app = express();
@@ -101,7 +101,7 @@ client.on("messageCreate", msg => {
 	const command = args.shift().toLowerCase();
 
 	if (command === "setlevelrole") {
-		if (!msg.member.permissions.has("ADMINISTRATOR")) {
+		if (!msg.member.roles.cache.some(r => r.id === "923444560766590986")) {
 			return
 		}
 		if (args[0] && args[1] && args[2]) {
@@ -123,7 +123,7 @@ client.on("messageCreate", msg => {
 			})
 		}
 	} else if(command === "warn"){
-	if (msg.member.roles.cache.some(r => r.id === "923444560766590986") || msg.member.permissions.has("ADMINISTRATOR")) {
+	if (msg.member.roles.cache.some(r => r.id === "923444560766590986")) {
 	  let warnedUser = msg.mentions.users.first()
 	  
 	  if (warnedUser && !warnedUser.bot) {
@@ -184,7 +184,7 @@ client.on("messageCreate", msg => {
 	  }
 	}
   } else if(command === "warnings"){
-	 if (msg.member.roles.cache.some(r => r.id === "923444560766590986") || msg.member.permissions.has("ADMINISTRATOR")) {
+	 if (msg.member.roles.cache.some(r => r.id === "923444560766590986")) {
 	  let warnedUser = msg.mentions.users.first()
 		let Embed = new EmbedBuilder()
 		.setColor(0x0073FF)
@@ -227,7 +227,7 @@ client.on("messageCreate", msg => {
 		}
   }}
   } else if(command === "removewarn"){
-		if (msg.member.roles.cache.some(r => r.id === "923444560766590986") || msg.member.permissions.has("ADMINISTRATOR")) {
+		if (msg.member.roles.cache.some(r => r.id === "923444560766590986")) {
 			let warnedUser = msg.mentions.users.first();
 			if (warnedUser) {
 				let id = warnedUser.id;
@@ -256,7 +256,7 @@ client.on("messageCreate", msg => {
 	const command = args.shift().toLowerCase();
 
 	if (command === "purge" || command === "clear") {
-		if (!msg.member.permissions.has("ADMINISTRATOR")) {
+		if (!msg.member.roles.cache.some(r => r.id === "923444560766590986")) {
 			msg.channel.send({
 				embeds: [{
 					"type": "rich",
@@ -388,7 +388,42 @@ client.on(Events.InteractionCreate, interaction => {
 		if (property) {
 			interaction.reply(`https://create.roblox.com/docs/reference/${type}/${type2}/${what}#${property}`)
 		}
+	} else if(interaction.commandName === "member_count") {
+		if(interaction.guild){
+			interaction.reply({
+				embeds: [{
+					"type": "rich",
+					"title": `Member Count`,
+					"description": interaction.guild.memberCount,
+					"color": 0x0073ff,
+				}]
+			})
+		} else {
+			interaction.reply({
+				embeds: [{
+					"type": "rich",
+					"title": `Member Count`,
+					"description": "null",
+					"color": 0x0073ff,
+				}]
+			})
+		}
+	} else if(interaction.commandName === "percentage") {
+		const value = interaction.options.getString("value")
+		const user_i = interaction.options.getUser("user")
+		
+		if (value === "Communist") {
+			interaction.reply({
+				embeds: [{
+					"type": "rich",
+					"title": `Rating <:hammer_sickle:1106776302435967057>`,
+					"description": `Analyzing behavior <a:loading:1106779481441587232>\n<@${user_i.id}> is ` + between(0, 100) + `% Communist. <:hammer_sickle:1106776302435967057>`,
+					"color": 0x0073ff,
+				}]
+			})
+		}
 	}
+	
 });
 
 client.on(Events.ClientReady, c => {
@@ -421,6 +456,9 @@ app.get('/display', function(req, res) {
 			.setDescription("off or on")
 			.setRequired(true)
 			.addChoices({ name: 'on', value: 'on' }, { name: 'off', value: 'off' }) )
+	const membercount = new SlashCommandBuilder()
+		.setName("member_count")
+		.setDescription("Gets the member count of the server.")
 	const docs = new SlashCommandBuilder()
 		.setName("docs")
 		.setDescription("Command which fetches anything from the roblox api")
@@ -449,6 +487,18 @@ app.get('/display', function(req, res) {
 			.setName("user")
 			.setRequired(false)
 			.setDescription("the user you want to get the rank of"))
+	const percentage = new SlashCommandBuilder()
+		.setName("percentage")
+		.setDescription("rates the users percentage of being ___")
+		.addUserOption(user => user
+			.setName("user")
+			.setRequired(true)
+			.setDescription("the user you want to get the percentage on"))
+		.addStringOption(option2 => option2
+			.setName("value")
+			.setDescription("What youre going to be rated by")
+			.addChoices({name: "Communist", value: "Communist"})
+			.setRequired(true))
 	const ping = new SlashCommandBuilder()
 		.setName("ping")
 		.setDescription('returns "Pong!" back to the user')
@@ -457,6 +507,8 @@ app.get('/display', function(req, res) {
 		ping,
 		rank,
 		levelUpPings,
-		docs
+		docs,
+		membercount,
+		percentage
   	]});
 })();
